@@ -1,10 +1,10 @@
 from aiogram import Router, types, Bot
 from aiogram.filters import CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
-from states import PhotoState
+from tg.states import PhotoState
+from recognition.detector import process_video
 
 rt = Router()
-
 
 @rt.message(CommandStart())
 async def handler_message_start(message: types.Message, state: FSMContext):
@@ -30,4 +30,13 @@ async def handler_wait_photo(message: types.Message, state: FSMContext, bot: Bot
     file_path = f"data/photos/{user_id}_{file_id}.{ext}"
     await bot.download(file_id, destination=file_path)
     await message.answer("Thx")
+
+    numbers = process_video(file_path)
+
+    if numbers:
+        text = "\n".join(numbers)
+        print(f"Find:\n{text}")
+        #await message.answer(f"Find:\n{text}")
+    else:
+        await message("unf nothing found")
     await state.clear()

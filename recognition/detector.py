@@ -1,4 +1,5 @@
 import cv2
+import os
 from ultralytics import YOLO
 
 
@@ -9,12 +10,15 @@ character_map = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
                     'U', 'V', 'W', 'X', 'Y', 'Z']
 
 # Load YOLOv8 models
-license_plate_model = YOLO("weights/detection.pt")  # Replace with your license plate model
-character_model = YOLO("weights/recognition.pt")          # Replace with your character model
+BASE_DIR = os.path.dirname(__file__)
+weights_dir = os.path.join(BASE_DIR, "weights")
+
+license_plate_model = YOLO(os.path.join(weights_dir, "detection.pt"))
+character_model = YOLO(os.path.join(weights_dir, "recognition.pt"))        # Replace with your character model
 
 # Open video or camera
-def process_video(video_path: str):
-    cap = cv2.VideoCapture(video_path)
+def process_video(file_path: str):
+    cap = cv2.VideoCapture(file_path)
     found_numbers = []
 
     while cap.isOpened():
