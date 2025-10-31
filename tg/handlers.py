@@ -6,7 +6,8 @@ from aiogram.fsm.context import FSMContext
 from services import db
 from tg.states import PhotoState
 from recognition.detector import process_video
-from tg.keyboard import main_menu
+from tg.keyboard.replykey import main_menu
+from tg.keyboard.inlinekey import inline_keyboard
 
 rt = Router()
 
@@ -75,9 +76,21 @@ async def handeler_search_output(message: types.message, state: FSMContext):
     for row in rows:
         if row["number"] == numbers_input:
             count = db.get_count(row['number'])
-            await message.answer(f"Find {row['number']} which was added {count}")
+            await message.answer(f"Find {row['number']} which was added {count}", reply_markup=inline_keyboard(row['number']))
             found = True
             break
-        if not found:
-            await message.answer("Unf nothing found :( )") 
+    if not found:
+        await message.answer("Unf nothing found :( ") 
     await state.clear()
+
+
+
+@rt.callback_query(lambda c: c.data.startswith("reset_count"))
+async def callback_reset(callback: types.CallbackQuery):
+    data = callback.data
+    number = data.split(":")[1]
+
+    db.reset_count(number)
+    await callback.message.answer("Reseted")
+    await callback.answer() 
+

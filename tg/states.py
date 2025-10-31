@@ -2,3 +2,4 @@ from aiogram.fsm.state import State, StatesGroup
 class PhotoState(StatesGroup):
     wait_for_photo = State()
     wait_for_search = State()
+    wait_for_reset = State()

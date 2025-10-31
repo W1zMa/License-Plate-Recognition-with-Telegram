@@ -54,20 +54,20 @@ def get_info(numbers_input):
     return rows
 
 
-def reset_count(number: str, accuracy: float, user_id: Optional[int]=None):
+def reset_count(number: str, user_id: Optional[int]=None):
     conn = get_conn()
     cur = conn.cursor()
     if user_id is None:
         cur.execute("DELETE FROM cars WHERE number = ?", (number,))
     else:
-        cur.execute("DELETE FROM cars WHERE number = ? AND accuracy = ? AND user_id = ?", (number, accuracy, user_id))
+        cur.execute("DELETE FROM cars WHERE number = ? AND user_id = ?", (number, user_id))
     conn.commit()
     conn.close()
 
-def get_history(number: str, limit: int=50) -> List[sqlite3.Row]:
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute(f"SELECT * FROM cars WHERE number = ? ORDER BY added_at DESC LIMIT {limit}", (number,))
-    rows = cur.fetchall()
-    conn.close()
-    return rows    
+#def get_history(number: str, limit: int=50) -> List[sqlite3.Row]:
+#   conn = get_conn()
+#   cur = conn.cursor()
+#   cur.execute(f"SELECT * FROM cars WHERE number = ? ORDER BY added_at DESC LIMIT {limit}", (number,))
+#   rows = cur.fetchall()
+#    conn.close()
+#    return rows    
