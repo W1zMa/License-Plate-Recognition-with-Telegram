@@ -37,13 +37,20 @@ def process_video(file_path: str):
 
             for char in characters[0].boxes:
                 x1c, y1c, x2c, y2c = map(int, char.xyxy[0])
-                cls = int(char.cls[0])
-                detected.append((cls, x1c))
+                cls = int(char.cls)
+                conf = float(char.conf[0])
+                detected.append((conf, cls, x1c))
 
-            detected.sort(key=lambda c: c[1])
-            plate_num = ''.join(character_map[c[0]] for c in detected)
+            detected.sort(key=lambda c: c[2])
+            plate_num = ''.join(character_map[c[1]] for c in detected)
+            avg_conf = sum(c[0] for c in detected) / len(detected) * 100
 
-            found_numbers.append(plate_num)
+            found_numbers.append({
+                "plate": plate_num,
+                'accuracy': round(avg_conf, 2) 
+            })
 
     cap.release()
     return found_numbers
+
+#process_video()

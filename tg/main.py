@@ -4,12 +4,15 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
 from tg.handlers import rt as handler_router
+from services import db
+
 
 load_dotenv()
 API_TOKEN = os.getenv("BOT_TOKEN")
 
 async def main():
     bot = Bot(token=API_TOKEN)
+    db.init_db()
     dp = Dispatcher(storage=MemoryStorage())
     dp.include_router(handler_router)
 
