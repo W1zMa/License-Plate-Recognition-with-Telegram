@@ -11,10 +11,15 @@ from tg.keyboard import main_menu
 rt = Router()
 
 @rt.message(CommandStart())
-async def handler_message_start(message: types.Message, state: FSMContext):
-    await state.set_state(PhotoState.wait_for_photo)
-    await message.answer("Hello send photo")
+async def handler_message_start(message: types.Message):
+    #await state.set_state(PhotoState.wait_for_photo)
+    await message.answer("Hello welcome", reply_markup=main_menu)
 
+
+@rt.message(lambda message: message.text == "Upload Photo/Video")
+async def handler_send_photo(message: types.Message, state: FSMContext):
+    await state.set_state(PhotoState.wait_for_photo)
+    await message.answer("Please send photo or video")
 
 @rt.message(StateFilter(PhotoState.wait_for_photo))
 async def handler_wait_photo(message: types.Message, state: FSMContext, bot: Bot):
@@ -66,9 +71,13 @@ async def handler_search_input(message: types.Message, state: FSMContext):
 async def handeler_search_output(message: types.message, state: FSMContext):
     numbers_input = message.text
     rows = db.get_info(numbers_input)
+    found = False
     for row in rows:
         if row["number"] == numbers_input:
-            await message.answer("true")
-        else:
-            await message.answer("false")
+            count = db.get_count(row['number'])
+            await message.answer(f"Find {row['number']} which was added {count}")
+            found = True
+            break
+        if not found:
+            await message.answer("Unf nothing found :( )") 
     await state.clear()
