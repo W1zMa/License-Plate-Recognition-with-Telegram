@@ -1,5 +1,6 @@
 import os
 import asyncio
+from dotenv import load_dotenv
 from aiogram import Router, types, Bot
 from aiogram.filters import CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
@@ -9,18 +10,19 @@ from recognition.detector import process_video
 from tg.keyboard.replykey import main_menu
 from tg.keyboard.inlinekey import inline_keyboard
 
+load_dotenv()
 rt = Router()
 
 @rt.message(CommandStart())
 async def handler_message_start(message: types.Message):
     #await state.set_state(PhotoState.wait_for_photo)
-    await message.answer("Hello welcome", reply_markup=main_menu)
+    await message.answer("👋 Hi there! Welcome to PlateSaver. Send a clear photo of the vehicle license plate and I’ll read it, save the number, and show you the result. Fast, simple, and private. 📸➡️🗂️", reply_markup=main_menu)
 
 
 @rt.message(lambda message: message.text == "Upload Photo/Video")
 async def handler_send_photo(message: types.Message, state: FSMContext):
     await state.set_state(PhotoState.wait_for_photo)
-    await message.answer("Please send photo or video")
+    await message.answer("Please send photo or video 📸")
 
 @rt.message(StateFilter(PhotoState.wait_for_photo))
 async def handler_wait_photo(message: types.Message, state: FSMContext, bot: Bot):
@@ -33,13 +35,13 @@ async def handler_wait_photo(message: types.Message, state: FSMContext, bot: Bot
         file_id = message.video.file_id
         ext = 'mp4'
     else:
-        await message.answer("Only photo or video")
+        await message.answer("📸 Please send a photo or video of the license plate only. 🚗✨")
         await state.clear
         return 
 
     file_path = f"data/photos/{user_id}_{file_id}.{ext}"
     await bot.download(file_id, destination=file_path)
-    await message.answer("Please wait")
+    await message.answer("Please wait ⏳")
 
     numbers = await asyncio.to_thread(process_video, file_path)
 
@@ -53,9 +55,9 @@ async def handler_wait_photo(message: types.Message, state: FSMContext, bot: Bot
         for num in numbers:
             count = db.get_count(num['plate'])
             #avg_conf
-            await message.answer(f'{num["plate"]} - Number (with Accuracy - {num["accuracy"]}), which was added {count} times')
+            await message.answer(f'✅ Plate {num["plate"]} detected with {num["accuracy"]}% accuracy. Added {count} times. 🚗')
     else:
-        await message.answer("unf nothing found")
+        await message.answer("😕 Oops! Nothing found in this photo. Try again with a clearer image. 📸✨")
     try:
         os.remove(file_path)
     except Exception as e:
@@ -66,7 +68,7 @@ async def handler_wait_photo(message: types.Message, state: FSMContext, bot: Bot
 @rt.message(lambda message: message.text == "Search")
 async def handler_search_input(message: types.Message, state: FSMContext):
     await state.set_state(PhotoState.wait_for_search)
-    await message.answer("Please Enter the number!")
+    await message.answer("🚘 Enter the license plate number you’d like to find. 🔍")
 
 @rt.message(StateFilter(PhotoState.wait_for_search))
 async def handeler_search_output(message: types.message, state: FSMContext):
@@ -80,17 +82,22 @@ async def handeler_search_output(message: types.message, state: FSMContext):
             found = True
             break
     if not found:
-        await message.answer("Unf nothing found :( ") 
+        await message.answer("😕 Oops! Nothing found") 
     await state.clear()
 
 
 
 @rt.callback_query(lambda c: c.data.startswith("reset_count"))
 async def callback_reset(callback: types.CallbackQuery):
-    data = callback.data
-    number = data.split(":")[1]
+    user_id = callback.from_user.id
+    if str(user_id) == os.getenv("ADMIN_ID"):
+        data = callback.data
+        number = data.split(":")[1]
 
-    db.reset_count(number)
-    await callback.message.answer("Reseted")
-    await callback.answer() 
+        db.reset_count(number)
+        await callback.message.answer("Reseted")
+        await callback.answer()
+    else:
+        await callback.message.answer("🚫 You’re not an admin")
+        await callback.answer()
 
