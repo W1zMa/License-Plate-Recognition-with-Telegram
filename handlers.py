@@ -5,10 +5,10 @@ from aiogram import Router, types, Bot
 from aiogram.filters import CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
 from services import db
-from tg.states import PhotoState
+from states import PhotoState
 from recognition.detector import process_video
-from tg.keyboard.replykey import main_menu
-from tg.keyboard.inlinekey import inline_keyboard
+from keyboard.replykey import main_menu
+from keyboard.inlinekey import inline_keyboard
 
 load_dotenv()
 rt = Router()
@@ -46,16 +46,16 @@ async def handler_wait_photo(message: types.Message, state: FSMContext, bot: Bot
     numbers = await asyncio.to_thread(process_video, file_path)
 
     for num in numbers:
-        db.save_plate(num['plate'], user_id, file_path, num['accuracy'])
+        db.save_plate(num['plate'], user_id, file_path, num['accuracy'], num['timecode'])
 
     if numbers:
-        text = "\n".join(f"{n['plate']} ({n['accuracy']}%)" for n in numbers)
+        text = "\n".join(f"{n['plate']} ({n['accuracy']}%), in {n['timecode']}" for n in numbers)
         print(f"Find:\n{text}")
         #await message.answer(f"Find:\n{text}")
         for num in numbers:
             count = db.get_count(num['plate'])
             #avg_conf
-            await message.answer(f'✅ Plate {num["plate"]} detected with {num["accuracy"]}% accuracy. Added {count} times. 🚗')
+            await message.answer(f'✅ Plate {num["plate"]} detected with {num["accuracy"]}% accuracy. Added {count} times. 🚗, on {num["timecode"]} sec')
     else:
         await message.answer("😕 Oops! Nothing found in this photo. Try again with a clearer image. 📸✨")
     try:
@@ -93,10 +93,14 @@ async def callback_reset(callback: types.CallbackQuery):
     if str(user_id) == os.getenv("ADMIN_ID"):
         data = callback.data
         number = data.split(":")[1]
-
-        db.reset_count(number)
-        await callback.message.answer("Reseted")
-        await callback.answer()
+        count = db.get_count(number)
+        if count == 0:
+            await callback.message.answer("Already reseted ❌")
+            await callback.answer()
+        else:
+            db.reset_count(number)
+            await callback.message.answer("Reseted ✅")
+            await callback.answer()
     else:
         await callback.message.answer("🚫 You’re not an admin")
         await callback.answer()

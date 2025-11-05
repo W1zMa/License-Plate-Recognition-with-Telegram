@@ -3,7 +3,7 @@ import os
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
-from tg.handlers import rt as handler_router
+from handlers import rt as handler_router
 from services import db
 
 

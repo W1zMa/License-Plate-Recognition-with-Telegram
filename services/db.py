@@ -16,31 +16,29 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         number TEXT NOT NULL,
         accuracy REAL,
-        user_id INTEGER,
+        timecode REAL,
+        count INTEGER,
         file_path TEXT,
         added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
     cur.execute("CREATE INDEX IF NOT EXISTS idx_number ON cars(number)")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_user ON cars(user_id)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_user ON cars(count)")
     conn.commit()
     conn.close()
 
-def save_plate(number: str, user_id: int, file_path: Optional[str]=None, accuracy: Optional[float]=None):
+def save_plate(number: str, count: int, file_path: Optional[str]=None, accuracy: Optional[float]=None, timecode: Optional[float]=None):
     conn = get_conn()
     cur = conn.cursor()
-    cur.execute("INSERT INTO cars (number, user_id, file_path, accuracy) VALUES (?, ?, ?, ?)",
-                (number, user_id, file_path, accuracy))
+    cur.execute("INSERT INTO cars (number, count, file_path, accuracy, timecode) VALUES (?, ?, ?, ?, ?)",
+                (number, count, file_path, accuracy, timecode))
     conn.commit()
     conn.close()
-
-def get_count(number: str, user_id: Optional[int]=None) -> int:
+    
+def get_count(number: str) -> int:
     conn = get_conn()
     cur = conn.cursor()
-    if user_id is None:
-        cur.execute("SELECT COUNT(*) FROM cars WHERE number = ?", (number,))
-    else:
-        cur.execute("SELECT COUNT(*) FROM cars WHERE number = ? AND user_id = ?", (number, user_id))
+    cur.execute("SELECT COUNT(*) FROM cars WHERE number = ? AND count > 0", (number,))
     count = cur.fetchone()[0]
     conn.close()
     return count
@@ -53,21 +51,11 @@ def get_info(numbers_input):
     conn.close()
     return rows
 
-
-def reset_count(number: str, user_id: Optional[int]=None):
+def reset_count(number: int):
     conn = get_conn()
     cur = conn.cursor()
-    if user_id is None:
-        cur.execute("DELETE FROM cars WHERE number = ?", (number,))
-    else:
-        cur.execute("DELETE FROM cars WHERE number = ? AND user_id = ?", (number, user_id))
+    cur.execute("UPDATE cars SET count = 0 WHERE number = ?", (number,))
     conn.commit()
     conn.close()
 
-#def get_history(number: str, limit: int=50) -> List[sqlite3.Row]:
-#   conn = get_conn()
-#   cur = conn.cursor()
-#   cur.execute(f"SELECT * FROM cars WHERE number = ? ORDER BY added_at DESC LIMIT {limit}", (number,))
-#   rows = cur.fetchall()
-#    conn.close()
-#    return rows    
+  
