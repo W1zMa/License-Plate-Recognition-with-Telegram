@@ -8,7 +8,7 @@ from services import db
 from states import PhotoState
 from recognition.detector import process_video
 from keyboard.replykey import main_menu
-from keyboard.inlinekey import inline_keyboard
+from keyboard.inlinekey import resetcounts, delete_number
 
 load_dotenv()
 rt = Router()
@@ -44,27 +44,21 @@ async def handler_wait_photo(message: types.Message, state: FSMContext, bot: Bot
     await message.answer("Please wait ⏳")
 
     numbers = await asyncio.to_thread(process_video, file_path)
-
-    for num in numbers:
-        db.save_plate(num['plate'], user_id, file_path, num['accuracy'], num['timecode'])
-
+    
     if numbers:
-        text = "\n".join(f"{n['plate']} ({n['accuracy']}%), in {n['timecode']}" for n in numbers)
-        print(f"Find:\n{text}")
-        #await message.answer(f"Find:\n{text}")
-        for num in numbers:
-            count = db.get_count(num['plate'])
-            #avg_conf
-            await message.answer(f'✅ Plate {num["plate"]} detected with {num["accuracy"]}% accuracy. Added {count} times. 🚗, on {num["timecode"]} sec')
+            text = "\n".join(f"{n['plate']} ({n['accuracy']}%), in {n['timecode']}" for n in numbers)
+            
+            print(f"Find:\n{text}")
+            for num in numbers:
+                count = db.get_count(num['plate']) + 1
+                db.save_plate(num['plate'], count, file_path, num['accuracy'], num['timecode'])
+                await message.answer(f'✅ Plate: {num["plate"]}. Accuracy: {num["accuracy"]}. Added: {count} times🚗. on {num["timecode"]} sec',
+                    reply_markup=delete_number(num['plate'])
+                )
+            await state.clear()
     else:
         await message.answer("😕 Oops! Nothing found in this photo. Try again with a clearer image. 📸✨")
-    try:
-        os.remove(file_path)
-    except Exception as e:
-        print("file not found")
-
-    await state.clear()
-
+    os.remove(file_path)
 @rt.message(lambda message: message.text == "Search")
 async def handler_search_input(message: types.Message, state: FSMContext):
     await state.set_state(PhotoState.wait_for_search)
@@ -78,14 +72,23 @@ async def handeler_search_output(message: types.message, state: FSMContext):
     for row in rows:
         if row["number"] == numbers_input:
             count = db.get_count(row['number'])
-            await message.answer(f"Find {row['number']} which was added {count}", reply_markup=inline_keyboard(row['number']))
+            await message.answer(f"Find {row['number']} which was added {count}", reply_markup=resetcounts(row['number']))
             found = True
             break
     if not found:
         await message.answer("😕 Oops! Nothing found") 
     await state.clear()
 
+@rt.callback_query(lambda c: c.data.startswith("delete_number"))
+async def callback_delnum(callback: types.CallbackQuery):
+    data = callback.data
+    plate = data.split(":")[1]
+    db.delet_plate(plate)
+    await callback.message.delete()
+    await callback.message.answer(f"✅ {plate} deleted successfully ")
+    await callback.answer()
 
+    
 
 @rt.callback_query(lambda c: c.data.startswith("reset_count"))
 async def callback_reset(callback: types.CallbackQuery):

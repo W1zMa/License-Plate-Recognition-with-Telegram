@@ -44,7 +44,12 @@ def process_video(file_path: str):
 
             detected.sort(key=lambda c: c[2])
             plate_num = ''.join(character_map[c[1]] for c in detected)
-            avg_conf = sum(c[0] for c in detected) / len(detected) * 100
+            if len(plate_num) < 5 or len(plate_num) > 10:
+                continue
+            try:
+                avg_conf = sum(c[0] for c in detected) / len(detected) * 100
+            except ZeroDivisionError:
+                continue
             if fps == 0:
                 time_code = 0
             else:    

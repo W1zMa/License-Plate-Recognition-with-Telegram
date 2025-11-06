@@ -23,9 +23,9 @@ def init_db():
     )
     """)
     cur.execute("CREATE INDEX IF NOT EXISTS idx_number ON cars(number)")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_user ON cars(count)")
     conn.commit()
     conn.close()
+
 
 def save_plate(number: str, count: int, file_path: Optional[str]=None, accuracy: Optional[float]=None, timecode: Optional[float]=None):
     conn = get_conn()
@@ -35,6 +35,13 @@ def save_plate(number: str, count: int, file_path: Optional[str]=None, accuracy:
     conn.commit()
     conn.close()
     
+def delet_plate(number: str):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM cars WHERE number = ?", (number,))
+    conn.commit()
+    conn.close()
+
 def get_count(number: str) -> int:
     conn = get_conn()
     cur = conn.cursor()
