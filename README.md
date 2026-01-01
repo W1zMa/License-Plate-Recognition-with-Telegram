@@ -6,6 +6,7 @@ The pre-trained license plate recognition model is taken from [RamatovInomjon/li
 
 ---
 
+
 ## Project Structure
 ```markdown
 licens_recogn/
@@ -21,8 +22,8 @@ licens_recogn/
 ├── recognition/
 │ ├── detector.py # Script to detect license plates (adapted)
 │ └── weights/ # Pre-trained models
-│ ├── detection.pt
-│ └── recognition.pt
+│  ├── detection.pt
+│  └── recognition.pt
 │
 ├── services/
 │ └── db.py # Handles database operations
@@ -31,6 +32,9 @@ licens_recogn/
 ├── .gitignore
 ├── handlers.py # Main bot handlers
 ├── main.py # Bot initialization
+├── Dockerfile
+├── docker-compose.yml
+├── .dockerignore
 ├── requirements.txt
 └── states.py # State management
 ```
@@ -44,7 +48,35 @@ licens_recogn/
 
 ---
 
-## Setup Instructions
+## Setup Instructions(With Docker 🐳)
+- Using Docker allows you to run the project without installing Python or dependencies locally.
+## Requirements
+
+- [Docker](https://www.docker.com/)
+- Docker Compose
+
+1. **Prepare environment variables**
+- Edit .env and set:
+   ```bash
+   BOT_TOKEN=<YOUR_BOT_TOKEN>
+   ADMIN_ID=<YOUR_TELEGRAM_USER_ID>
+
+2. **Build and run the container**
+   ```bash
+   docker compose up --build
+> ⚠️ The first build may take several minutes due to ML dependencies (PyTorch, Ultralytics).
+
+3. **Subsequent runs**
+   ```bash
+   docker compose up
+
+4. **How to stop?**
+   ```bash
+   docker compose down
+
+- or CTRL + C in terminal
+
+## Setup Instructions(Without Docker 🐳)
 
 1. **Create a virtual environment:**
 
@@ -58,7 +90,8 @@ licens_recogn/
    pip install -r requirements.txt
 
 3. **Configure .env file:**
-   TOKEN=<YOUR_BOT_TOKEN>
+   ```bash
+   BOT_TOKEN=<YOUR_BOT_TOKEN>
    ADMIN_ID=<YOUR_USER_ID>
 
 4. **Run the bot:**
