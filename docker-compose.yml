@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  bot:
+    build: .
+    container_name: lpr-bot
+    restart: unless-stopped
+
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
+

@@ -1,0 +1,19 @@
+# Git
+.git
+.gitignore
+
+__pycache__/
+*.pyc
+*.pyo
+
+venv/
+.venv/
+
+data/
+*.sqlite
+*.db
+
+.DS_Store
+Thumbs.db
+
+	
